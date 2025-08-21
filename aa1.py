@@ -11,6 +11,24 @@ tubs_file = st.file_uploader("Upload TUBS Excel file", type=["xlsx"], key="tubs_
 demand_file = st.file_uploader("Upload Demand Excel file (for Project)", type=["xlsx"], key="demand_file")
 beam_balance_file = st.file_uploader("Upload BeamBalance Excel file", type=["xlsx"], key="beam_balance_file")
 
+# --- File uploaders with checkmark ---
+post_file = st.file_uploader("Upload POST Excel file", type=["xlsx"], key="post_file")
+if post_file is not None:
+    st.success("POST file uploaded ✅")
+
+tubs_file = st.file_uploader("Upload TUBS Excel file", type=["xlsx"], key="tubs_file")
+if tubs_file is not None:
+    st.success("TUBS file uploaded ✅")
+
+demand_file = st.file_uploader("Upload Demand Excel file (for Project)", type=["xlsx"], key="demand_file")
+if demand_file is not None:
+    st.success("Demand file uploaded ✅")
+
+beam_balance_file = st.file_uploader("Upload BeamBalance Excel file", type=["xlsx"], key="beam_balance_file")
+if beam_balance_file is not None:
+    st.success("BeamBalance file uploaded ✅")
+
+
 def extract_number(value, decimals):
     if pd.isna(value):
         return None
@@ -203,6 +221,7 @@ if post_file is not None:
         file_name="modified_post.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 
 
