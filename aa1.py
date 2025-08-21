@@ -36,9 +36,9 @@ if post_file is not None:
 
     # Add GBD/GBS count column
     if "Demand" in post_df.columns:
-        post_df["GBD_GBS_Count"] = post_df["Demand"].apply(count_gbd_gbs)
+        post_df["d counts"] = post_df["Demand"].apply(count_gbd_gbs)
         cols = list(post_df.columns)
-        cols.insert(2, cols.pop(cols.index("GBD_GBS_Count")))
+        cols.insert(2, cols.pop(cols.index("d counts")))
         post_df = post_df[cols]
 
     # Merge Project + All GRE Prod Orders
@@ -203,5 +203,6 @@ if post_file is not None:
         file_name="modified_post.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 
