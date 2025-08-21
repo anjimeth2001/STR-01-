@@ -155,64 +155,65 @@ if post_file is not None:
     st.dataframe(post_df, use_container_width=True)
 
     # --- Export Excel with formatting ---
-    output = BytesIO()
-    post_df.to_excel(output, index=False, sheet_name="ModifiedPost")
-    output.seek(0)
-    wb = load_workbook(output)
-    ws = wb.active
+output = BytesIO()
+post_df.to_excel(output, index=False, sheet_name="ModifiedPost")
+output.seek(0)
+wb = load_workbook(output)
+ws = wb.active
 
-    thin = Border(left=Side(style="thin"), right=Side(style="thin"),
-                  top=Side(style="thin"), bottom=Side(style="thin"))
-    for row in ws.iter_rows(min_row=1, max_row=ws.max_row,
-                            min_col=1, max_col=ws.max_column):
-        for cell in row:
-            cell.border = thin
+thin = Border(left=Side(style="thin"), right=Side(style="thin"),
+              top=Side(style="thin"), bottom=Side(style="thin"))
 
-    def col_idx(col_name: str):
-        try:
-            return list(post_df.columns).index(col_name) + 1
-        except ValueError:
-            return None
+# Loop through all cells to apply border + font
+for row in ws.iter_rows(min_row=1, max_row=ws.max_row,
+                        min_col=1, max_col=ws.max_column):
+    for cell in row:
+        cell.border = thin
+        # Default font for all cells
+        cell.font = Font(name="Aptos Narrow", size=9, color="000000")  # Black default
 
-    beam_idx = col_idx("Beam Issue To PO")
-    weft_idx = col_idx("Weft Issue To PO")
-    sum_idx = col_idx("Beam+Weft")
-    waste_gre_idx = col_idx("Waste+GreIn")
-    action_idx = col_idx("Action Qty Befor Post")
+def col_idx(col_name: str):
+    try:
+        return list(post_df.columns).index(col_name) + 1
+    except ValueError:
+        return None
 
-    if beam_idx:
-        for r in range(2, ws.max_row + 1):
-            ws.cell(row=r, column=beam_idx).number_format = "0.00"
-    if weft_idx:
-        for r in range(2, ws.max_row + 1):
-            ws.cell(row=r, column=weft_idx).number_format = "0.00"
-    if sum_idx:
-        for r in range(2, ws.max_row + 1):
-            c = ws.cell(row=r, column=sum_idx)
-            c.number_format = "0.00"
-            c.font = Font(color="FFFFFF")
-            c.font = Font(color="006400")  # Dark green font only, no fill
-    if waste_gre_idx:
-        for r in range(2, ws.max_row + 1):
-            c = ws.cell(row=r, column=waste_gre_idx)
-            c.number_format = "0.00"
-            c.font = Font(color="FFFFFF")
-            c.font = Font(color="006400")  # Dark green font only, no fill
-    if action_idx:
-        for r in range(2, ws.max_row + 1):
-            c = ws.cell(row=r, column=action_idx)
-            c.number_format = "0.000"
-            c.font = Font(color="FF0000")
+beam_idx = col_idx("Beam Issue To PO")
+weft_idx = col_idx("Weft Issue To PO")
+sum_idx = col_idx("Beam+Weft")
+waste_gre_idx = col_idx("Waste+GreIn")
+action_idx = col_idx("Action Qty Befor Post")
 
-    final_buf = BytesIO()
-    wb.save(final_buf)
-    final_buf.seek(0)
+if beam_idx:
+    for r in range(2, ws.max_row + 1):
+        ws.cell(row=r, column=beam_idx).number_format = "0.00"
+if weft_idx:
+    for r in range(2, ws.max_row + 1):
+        ws.cell(row=r, column=weft_idx).number_format = "0.00"
+if sum_idx:
+    for r in range(2, ws.max_row + 1):
+        c = ws.cell(row=r, column=sum_idx)
+        c.number_format = "0.00"
+        c.font = Font(name="Aptos Narrow", size=9, color="006400")  # Dark green
+if waste_gre_idx:
+    for r in range(2, ws.max_row + 1):
+        c = ws.cell(row=r, column=waste_gre_idx)
+        c.number_format = "0.00"
+        c.font = Font(name="Aptos Narrow", size=9, color="006400")  # Dark green
+if action_idx:
+    for r in range(2, ws.max_row + 1):
+        c = ws.cell(row=r, column=action_idx)
+        c.number_format = "0.000"
+        c.font = Font(name="Aptos Narrow", size=9, color="FF0000")  # Red
 
-    # --- Download button ---
-    st.download_button(
-        label="📥 Download Modified POST",
-        data=final_buf,
-        file_name="modified_post.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+final_buf = BytesIO()
+wb.save(final_buf)
+final_buf.seek(0)
 
+# --- Download button ---
+st.download_button(
+    label="📥 Download Modified POST",
+    data=final_buf,
+    file_name="modified_post.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
