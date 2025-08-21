@@ -3,7 +3,7 @@ import pandas as pd
 import re
 from io import BytesIO
 from openpyxl import load_workbook
-from openpyxl.styles import Border, Side, Font
+from openpyxl.styles import Border, Side, Font, PatternFill, Color
 
 # --- File uploaders ---
 post_file = st.file_uploader("Upload POST Excel file", type=["xlsx"], key="post_file")
@@ -30,7 +30,6 @@ def count_gbd_gbs(value):
 # --- Main processing ---
 post_df = None
 if post_file is not None:
-    # Read POST
     xls_post = pd.ExcelFile(post_file)
     post_sheet = st.selectbox("Select sheet from POST file", xls_post.sheet_names, index=0)
     post_df = pd.read_excel(xls_post, sheet_name=post_sheet)
@@ -68,19 +67,27 @@ if post_file is not None:
                     cols.insert(4, cols.pop(cols.index("All GRE Prod Orders (Project)")))
                 post_df = post_df[cols]
 
-            # --- GB count in All GRE Prod Orders ---
+            # GB count in All GRE Prod Orders
             post_df["GB_Count_in_Project"] = post_df["All GRE Prod Orders (Project)"].apply(
                 lambda x: len([v for v in str(x).split(",") if "GB" in v])
             )
             cols = list(post_df.columns)
             gb_col = cols.pop(cols.index("GB_Count_in_Project"))
-            cols.insert(5, gb_col)  # 6th column
+            cols.insert(5, gb_col)
             post_df = post_df[cols]
 
     # Clean numeric columns
     for col, dec in [("Beam Issue To PO", 2), ("Weft Issue To PO", 2), ("Action Qty Befor Post", 3)]:
         if col in post_df.columns:
             post_df[col] = post_df[col].apply(lambda x: extract_number(x, dec))
+
+    # Add sum column after Weft Issue To PO
+    if "Beam Issue To PO" in post_df.columns and "Weft Issue To PO" in post_df.columns:
+        post_df["Beam+Weft"] = post_df["Beam Issue To PO"].fillna(0) + post_df["Weft Issue To PO"].fillna(0)
+        cols = list(post_df.columns)
+        idx = cols.index("Weft Issue To PO") + 1
+        cols.insert(idx, cols.pop(cols.index("Beam+Weft")))
+        post_df = post_df[cols]
 
     # Merge TT_CODE from TUBS
     if tubs_file is not None:
@@ -175,7 +182,7 @@ if post_file is not None:
             else:
                 st.dataframe(filtered_df, use_container_width=True)
 
-    # --- Export Excel ---
+    # --- Export Excel with formatting ---
     if post_df is not None:
         output = BytesIO()
         post_df.to_excel(output, index=False, sheet_name="ModifiedPost")
@@ -198,6 +205,7 @@ if post_file is not None:
 
         beam_idx = col_idx("Beam Issue To PO")
         weft_idx = col_idx("Weft Issue To PO")
+        sum_idx = col_idx("Beam+Weft")
         action_idx = col_idx("Action Qty Befor Post")
 
         if beam_idx:
@@ -206,6 +214,12 @@ if post_file is not None:
         if weft_idx:
             for r in range(2, ws.max_row + 1):
                 ws.cell(row=r, column=weft_idx).number_format = "0.00"
+        if sum_idx:
+            for r in range(2, ws.max_row + 1):
+                c = ws.cell(row=r, column=sum_idx)
+                c.number_format = "0.00"
+                c.font = Font(color="FFFFFF")
+                c.fill = PatternFill(start_color="00008B", end_color="00008B", fill_type="solid")  # Dark Blue
         if action_idx:
             for r in range(2, ws.max_row + 1):
                 c = ws.cell(row=r, column=action_idx)
