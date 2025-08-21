@@ -3,7 +3,7 @@ import pandas as pd
 import re
 from io import BytesIO
 from openpyxl import load_workbook
-from openpyxl.styles import Border, Side, Font, PatternFill, Color
+from openpyxl.styles import Border, Side, Font, PatternFill
 
 # --- File uploaders ---
 post_file = st.file_uploader("Upload POST Excel file", type=["xlsx"], key="post_file")
@@ -87,6 +87,14 @@ if post_file is not None:
         cols = list(post_df.columns)
         idx = cols.index("Weft Issue To PO") + 1
         cols.insert(idx, cols.pop(cols.index("Beam+Weft")))
+        post_df = post_df[cols]
+
+    # Add sum column after Gre In Qty To WH
+    if "Waste" in post_df.columns and "Gre In Qty To WH" in post_df.columns:
+        post_df["Waste+GreIn"] = post_df["Waste"].fillna(0) + post_df["Gre In Qty To WH"].fillna(0)
+        cols = list(post_df.columns)
+        idx = cols.index("Gre In Qty To WH") + 1
+        cols.insert(idx, cols.pop(cols.index("Waste+GreIn")))
         post_df = post_df[cols]
 
     # Merge TT_CODE from TUBS
@@ -206,6 +214,7 @@ if post_file is not None:
         beam_idx = col_idx("Beam Issue To PO")
         weft_idx = col_idx("Weft Issue To PO")
         sum_idx = col_idx("Beam+Weft")
+        waste_gre_idx = col_idx("Waste+GreIn")
         action_idx = col_idx("Action Qty Befor Post")
 
         if beam_idx:
@@ -220,6 +229,12 @@ if post_file is not None:
                 c.number_format = "0.00"
                 c.font = Font(color="FFFFFF")
                 c.fill = PatternFill(start_color="00008B", end_color="00008B", fill_type="solid")  # Dark Blue
+        if waste_gre_idx:
+            for r in range(2, ws.max_row + 1):
+                c = ws.cell(row=r, column=waste_gre_idx)
+                c.number_format = "0.00"
+                c.font = Font(color="FFFFFF")
+                c.fill = PatternFill(start_color="228B22", end_color="228B22", fill_type="solid")  # Dark Green
         if action_idx:
             for r in range(2, ws.max_row + 1):
                 c = ws.cell(row=r, column=action_idx)
