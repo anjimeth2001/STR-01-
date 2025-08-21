@@ -179,13 +179,13 @@ if post_file is not None:
             c = ws.cell(row=r, column=sum_idx)
             c.number_format = "0.00"
             c.font = Font(color="FFFFFF")
-            c.fill = PatternFill(start_color="00008B", end_color="00008B", fill_type="solid")
+            c.fill = PatternFill(start_color="CAF1DE", end_color="CAF1DE", fill_type="solid")
     if waste_gre_idx:
         for r in range(2, ws.max_row + 1):
             c = ws.cell(row=r, column=waste_gre_idx)
             c.number_format = "0.00"
             c.font = Font(color="FFFFFF")
-            c.fill = PatternFill(start_color="00008B", end_color="00008B", fill_type="solid")
+            c.fill = PatternFill(start_color="CAF1DE", end_color="CAF1DE", fill_type="solid")
     if action_idx:
         for r in range(2, ws.max_row + 1):
             c = ws.cell(row=r, column=action_idx)
@@ -203,3 +203,4 @@ if post_file is not None:
         file_name="modified_post.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
