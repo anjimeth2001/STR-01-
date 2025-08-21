@@ -5,7 +5,7 @@ from io import BytesIO
 from openpyxl import load_workbook
 from openpyxl.styles import Border, Side, Font, PatternFill
 
-# --- File uploaders with checkmarks ---
+# --- File uploaders ---
 post_file = st.file_uploader("Upload POST Excel file", type=["xlsx"], key="post_file")
 if post_file is not None:
     st.success("POST file uploaded ✅")
@@ -154,82 +154,74 @@ if post_file is not None:
     st.subheader("Modified POST Preview")
     st.dataframe(post_df, use_container_width=True)
 
-   # --- Export Excel with formatting ---
-final_buf = BytesIO()
+    # --- Export Excel with formatting ---
+    final_buf = BytesIO()
+    post_df.to_excel(final_buf, index=False, sheet_name="ModifiedPost", engine="openpyxl")
+    final_buf.seek(0)
 
-# Write DataFrame to BytesIO using openpyxl engine
-post_df.to_excel(final_buf, index=False, sheet_name="ModifiedPost", engine="openpyxl")
-final_buf.seek(0)
+    # Load workbook from BytesIO
+    wb = load_workbook(final_buf)
+    ws = wb.active
 
-# Load workbook from BytesIO
-wb = load_workbook(final_buf)
-ws = wb.active
+    thin = Border(left=Side(style="thin"), right=Side(style="thin"),
+                  top=Side(style="thin"), bottom=Side(style="thin"))
+    default_font = Font(name="Aptos Narrow", size=9, color="000000")
 
-# Define thin border
-thin = Border(left=Side(style="thin"), right=Side(style="thin"),
-              top=Side(style="thin"), bottom=Side(style="thin"))
+    # Apply border, font, and remove any fill
+    for row in ws.iter_rows(min_row=1, max_row=ws.max_row,
+                            min_col=1, max_col=ws.max_column):
+        for cell in row:
+            cell.border = thin
+            cell.font = default_font
+            cell.fill = PatternFill(fill_type="none")  # remove any background fill
 
-# Default font for all cells
-default_font = Font(name="Aptos Narrow", size=9, color="000000")
+    # Apply number formatting and conditional font colors
+    def col_idx(col_name):
+        try:
+            return list(post_df.columns).index(col_name) + 1
+        except ValueError:
+            return None
 
-# Apply border, font, and remove fill
-for row in ws.iter_rows(min_row=1, max_row=ws.max_row,
-                        min_col=1, max_col=ws.max_column):
-    for cell in row:
-        cell.border = thin
-        cell.font = default_font
-        cell.fill = PatternFill(fill_type="none")  # remove any background fill
+    beam_idx = col_idx("Beam Issue To PO")
+    weft_idx = col_idx("Weft Issue To PO")
+    sum_idx = col_idx("Beam+Weft")
+    waste_gre_idx = col_idx("Waste+GreIn")
+    action_idx = col_idx("Action Qty Befor Post")
 
-# Helper to get column index by name
-def col_idx(col_name: str):
-    try:
-        return list(post_df.columns).index(col_name) + 1
-    except ValueError:
-        return None
+    if beam_idx:
+        for r in range(2, ws.max_row + 1):
+            ws.cell(row=r, column=beam_idx).number_format = "0.00"
 
-beam_idx = col_idx("Beam Issue To PO")
-weft_idx = col_idx("Weft Issue To PO")
-sum_idx = col_idx("Beam+Weft")
-waste_gre_idx = col_idx("Waste+GreIn")
-action_idx = col_idx("Action Qty Befor Post")
+    if weft_idx:
+        for r in range(2, ws.max_row + 1):
+            ws.cell(row=r, column=weft_idx).number_format = "0.00"
 
-# Apply number formatting and conditional colors
-if beam_idx:
-    for r in range(2, ws.max_row + 1):
-        ws.cell(row=r, column=beam_idx).number_format = "0.00"
+    if sum_idx:
+        for r in range(2, ws.max_row + 1):
+            c = ws.cell(row=r, column=sum_idx)
+            c.number_format = "0.00"
+            c.font = Font(name="Aptos Narrow", size=9, color="006400")  # Dark green
 
-if weft_idx:
-    for r in range(2, ws.max_row + 1):
-        ws.cell(row=r, column=weft_idx).number_format = "0.00"
+    if waste_gre_idx:
+        for r in range(2, ws.max_row + 1):
+            c = ws.cell(row=r, column=waste_gre_idx)
+            c.number_format = "0.00"
+            c.font = Font(name="Aptos Narrow", size=9, color="006400")  # Dark green
 
-if sum_idx:
-    for r in range(2, ws.max_row + 1):
-        c = ws.cell(row=r, column=sum_idx)
-        c.number_format = "0.00"
-        c.font = Font(name="Aptos Narrow", size=9, color="006400")  # Dark green
+    if action_idx:
+        for r in range(2, ws.max_row + 1):
+            c = ws.cell(row=r, column=action_idx)
+            c.number_format = "0.000"
+            c.font = Font(name="Aptos Narrow", size=9, color="FF0000")  # Red
 
-if waste_gre_idx:
-    for r in range(2, ws.max_row + 1):
-        c = ws.cell(row=r, column=waste_gre_idx)
-        c.number_format = "0.00"
-        c.font = Font(name="Aptos Narrow", size=9, color="006400")  # Dark green
+    final_buf = BytesIO()
+    wb.save(final_buf)
+    final_buf.seek(0)
 
-if action_idx:
-    for r in range(2, ws.max_row + 1):
-        c = ws.cell(row=r, column=action_idx)
-        c.number_format = "0.000"
-        c.font = Font(name="Aptos Narrow", size=9, color="FF0000")  # Red
-
-# Reset buffer and save
-final_buf = BytesIO()
-wb.save(final_buf)
-final_buf.seek(0)
-
-# --- Download button ---
-st.download_button(
-    label="📥 Download Modified POST",
-    data=final_buf,
-    file_name="modified_post.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
-
+    # --- Download button ---
+    st.download_button(
+        label="📥 Download Modified POST",
+        data=final_buf,
+        file_name="modified_post.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
