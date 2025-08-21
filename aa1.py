@@ -5,13 +5,7 @@ from io import BytesIO
 from openpyxl import load_workbook
 from openpyxl.styles import Border, Side, Font, PatternFill
 
-# --- File uploaders ---
-post_file = st.file_uploader("Upload POST Excel file", type=["xlsx"], key="post_file")
-tubs_file = st.file_uploader("Upload TUBS Excel file", type=["xlsx"], key="tubs_file")
-demand_file = st.file_uploader("Upload Demand Excel file (for Project)", type=["xlsx"], key="demand_file")
-beam_balance_file = st.file_uploader("Upload BeamBalance Excel file", type=["xlsx"], key="beam_balance_file")
-
-# --- File uploaders with checkmark ---
+# --- File uploaders with checkmarks ---
 post_file = st.file_uploader("Upload POST Excel file", type=["xlsx"], key="post_file")
 if post_file is not None:
     st.success("POST file uploaded ✅")
@@ -28,7 +22,7 @@ beam_balance_file = st.file_uploader("Upload BeamBalance Excel file", type=["xls
 if beam_balance_file is not None:
     st.success("BeamBalance file uploaded ✅")
 
-
+# --- Helper functions ---
 def extract_number(value, decimals):
     if pd.isna(value):
         return None
@@ -196,14 +190,14 @@ if post_file is not None:
         for r in range(2, ws.max_row + 1):
             c = ws.cell(row=r, column=sum_idx)
             c.number_format = "0.00"
-            c.font = Font(color="0000D1")
-            c.fill = PatternFill(start_color="CAF1DE", end_color="CAF1DE", fill_type="solid")
+            c.font = Font(color="FFFFFF")
+            c.fill = PatternFill(start_color="00008B", end_color="00008B", fill_type="solid")  # Dark Blue
     if waste_gre_idx:
         for r in range(2, ws.max_row + 1):
             c = ws.cell(row=r, column=waste_gre_idx)
             c.number_format = "0.00"
-            c.font = Font(color="0000D1")
-            c.fill = PatternFill(start_color="CAF1DE", end_color="CAF1DE", fill_type="solid")
+            c.font = Font(color="FFFFFF")
+            c.fill = PatternFill(start_color="00008B", end_color="00008B", fill_type="solid")  # Dark Blue
     if action_idx:
         for r in range(2, ws.max_row + 1):
             c = ws.cell(row=r, column=action_idx)
@@ -221,7 +215,3 @@ if post_file is not None:
         file_name="modified_post.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
-
-
-
