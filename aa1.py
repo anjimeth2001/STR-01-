@@ -172,12 +172,13 @@ thin = Border(left=Side(style="thin"), right=Side(style="thin"),
 # Default font for all cells
 default_font = Font(name="Aptos Narrow", size=9, color="000000")
 
-# Apply border and default font to all cells
+# Apply border, font, and remove fill
 for row in ws.iter_rows(min_row=1, max_row=ws.max_row,
                         min_col=1, max_col=ws.max_column):
     for cell in row:
         cell.border = thin
         cell.font = default_font
+        cell.fill = PatternFill(fill_type="none")  # remove any background fill
 
 # Helper to get column index by name
 def col_idx(col_name: str):
@@ -231,3 +232,4 @@ st.download_button(
     file_name="modified_post.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
+
