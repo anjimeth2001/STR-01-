@@ -82,20 +82,38 @@ if post_file is not None:
             post_df[col] = post_df[col].apply(lambda x: extract_number(x, dec))
 
     # Add sum column after Weft Issue To PO
-    if "Beam Issue To PO" in post_df.columns and "Weft Issue To PO" in post_df.columns:
-        post_df["Beam+Weft"] = post_df["Beam Issue To PO"].fillna(0) + post_df["Weft Issue To PO"].fillna(0)
-        cols = list(post_df.columns)
-        idx = cols.index("Weft Issue To PO") + 1
-        cols.insert(idx, cols.pop(cols.index("Beam+Weft")))
-        post_df = post_df[cols]
+if "Beam Issue To PO" in post_df.columns and "Weft Issue To PO" in post_df.columns:
+    post_df["Beam+Weft"] = post_df["Beam Issue To PO"].fillna(0) + post_df["Weft Issue To PO"].fillna(0)
+    cols = list(post_df.columns)
+    idx = cols.index("Weft Issue To PO") + 1
+    cols.insert(idx, cols.pop(cols.index("Beam+Weft")))
+    post_df = post_df[cols]
 
-    # Add sum column after Gre In Qty To WH
-    if "Waste" in post_df.columns and "Gre In Qty To WH" in post_df.columns:
-        post_df["Waste+GreIn"] = post_df["Waste"].fillna(0) + post_df["Gre In Qty To WH"].fillna(0)
-        cols = list(post_df.columns)
-        idx = cols.index("Gre In Qty To WH") + 1
-        cols.insert(idx, cols.pop(cols.index("Waste+GreIn")))
-        post_df = post_df[cols]
+# Add sum column after Gre In Qty To WH
+if "Waste" in post_df.columns and "Gre In Qty To WH" in post_df.columns:
+    post_df["Waste+GreIn"] = post_df["Waste"].fillna(0) + post_df["Gre In Qty To WH"].fillna(0)
+    cols = list(post_df.columns)
+    idx = cols.index("Gre In Qty To WH") + 1
+    cols.insert(idx, cols.pop(cols.index("Waste+GreIn")))
+    post_df = post_df[cols]
+
+# --- Excel formatting for sum columns ---
+sum_idx = col_idx("Beam+Weft")
+waste_gre_idx = col_idx("Waste+GreIn")
+
+if sum_idx:
+    for r in range(2, ws.max_row + 1):
+        c = ws.cell(row=r, column=sum_idx)
+        c.number_format = "0.00"
+        c.font = Font(color="FFFFFF")
+        c.fill = PatternFill(start_color="00008B", end_color="00008B", fill_type="solid")  # Dark Blue
+
+if waste_gre_idx:
+    for r in range(2, ws.max_row + 1):
+        c = ws.cell(row=r, column=waste_gre_idx)
+        c.number_format = "0.00"
+        c.font = Font(color="FFFFFF")
+        c.fill = PatternFill(start_color="00008B", end_color="00008B", fill_type="solid")  # Dark Blue
 
     # Merge TT_CODE from TUBS
     if tubs_file is not None:
@@ -278,3 +296,4 @@ if post_file is not None:
                     file_name="filtered_post.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
+
