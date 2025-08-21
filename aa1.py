@@ -154,24 +154,32 @@ if post_file is not None:
     st.subheader("Modified POST Preview")
     st.dataframe(post_df, use_container_width=True)
 
-    # --- Export Excel with formatting ---
-output = BytesIO()
-post_df.to_excel(output, index=False, sheet_name="ModifiedPost")
-output.seek(0)
-wb = load_workbook(output)
+   # --- Export Excel with formatting ---
+final_buf = BytesIO()
+
+# Write DataFrame to BytesIO using openpyxl engine
+post_df.to_excel(final_buf, index=False, sheet_name="ModifiedPost", engine="openpyxl")
+final_buf.seek(0)
+
+# Load workbook from BytesIO
+wb = load_workbook(final_buf)
 ws = wb.active
 
+# Define thin border
 thin = Border(left=Side(style="thin"), right=Side(style="thin"),
               top=Side(style="thin"), bottom=Side(style="thin"))
 
-# Loop through all cells to apply border + font
+# Default font for all cells
+default_font = Font(name="Aptos Narrow", size=9, color="000000")
+
+# Apply border and default font to all cells
 for row in ws.iter_rows(min_row=1, max_row=ws.max_row,
                         min_col=1, max_col=ws.max_column):
     for cell in row:
         cell.border = thin
-        # Default font for all cells
-        cell.font = Font(name="Aptos Narrow", size=9, color="000000")  # Black default
+        cell.font = default_font
 
+# Helper to get column index by name
 def col_idx(col_name: str):
     try:
         return list(post_df.columns).index(col_name) + 1
@@ -184,28 +192,34 @@ sum_idx = col_idx("Beam+Weft")
 waste_gre_idx = col_idx("Waste+GreIn")
 action_idx = col_idx("Action Qty Befor Post")
 
+# Apply number formatting and conditional colors
 if beam_idx:
     for r in range(2, ws.max_row + 1):
         ws.cell(row=r, column=beam_idx).number_format = "0.00"
+
 if weft_idx:
     for r in range(2, ws.max_row + 1):
         ws.cell(row=r, column=weft_idx).number_format = "0.00"
+
 if sum_idx:
     for r in range(2, ws.max_row + 1):
         c = ws.cell(row=r, column=sum_idx)
         c.number_format = "0.00"
         c.font = Font(name="Aptos Narrow", size=9, color="006400")  # Dark green
+
 if waste_gre_idx:
     for r in range(2, ws.max_row + 1):
         c = ws.cell(row=r, column=waste_gre_idx)
         c.number_format = "0.00"
         c.font = Font(name="Aptos Narrow", size=9, color="006400")  # Dark green
+
 if action_idx:
     for r in range(2, ws.max_row + 1):
         c = ws.cell(row=r, column=action_idx)
         c.number_format = "0.000"
         c.font = Font(name="Aptos Narrow", size=9, color="FF0000")  # Red
 
+# Reset buffer and save
 final_buf = BytesIO()
 wb.save(final_buf)
 final_buf.seek(0)
