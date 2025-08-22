@@ -99,17 +99,17 @@ if post_file is not None:
                 post_df["All GRE Prod Orders (Project)"] = post_df["Project"].map(project_po_mapping)
 
                 # Effective date end (latest)
-                if "Effective date end" in demand_df.columns:
-                    demand_df["Effective date end"] = pd.to_datetime(demand_df["Effective date end"], errors='coerce')
+                if "Date / time" in demand_df.columns:
+                    demand_df["Date / time"] = pd.to_datetime(demand_df["Date / time"], errors='coerce')
                     effective_date_mapping = (
-                        demand_df.groupby("GRE Prod Order")["Effective date end"].max().reset_index()
+                        demand_df.groupby("GRE Prod Order")["Date / time"].max().reset_index()
                     )
                     post_df = post_df.merge(
                         effective_date_mapping, how="left",
                         left_on="Production Order", right_on="GRE Prod Order"
                     )
                     post_df.drop(columns=["GRE Prod Order"], inplace=True, errors="ignore")
-                    post_df["Effective date end"] = post_df["Effective date end"].fillna("not found")
+                    post_df["Date / time"] = post_df["Date / time"].fillna("not found")
 
                 post_df["Project"] = post_df["Project"].fillna("not found")
                 post_df["All GRE Prod Orders (Project)"] = post_df["All GRE Prod Orders (Project)"].fillna("not found")
@@ -120,8 +120,8 @@ if post_file is not None:
                     cols.insert(3, cols.pop(cols.index("Project")))
                     if "All GRE Prod Orders (Project)" in cols:
                         cols.insert(4, cols.pop(cols.index("All GRE Prod Orders (Project)")))
-                    if "Effective date end" in cols:
-                        cols.insert(5, cols.pop(cols.index("Effective date end")))
+                    if "Date / time" in cols:
+                        cols.insert(5, cols.pop(cols.index("Date / time")))
                     post_df = post_df[cols]
 
                 # GB Count
