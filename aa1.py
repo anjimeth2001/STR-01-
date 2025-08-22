@@ -53,29 +53,53 @@ if post_file is not None:
         cols.insert(2, cols.pop(cols.index("d counts")))
         post_df = post_df[cols]
 
-    # Merge Project + All GRE Prod Orders
+    # Merge Project + All GRE Prod Orders + Effective date end
     if demand_file is not None:
         demand_df = pd.read_excel(demand_file)
         demand_df.columns = demand_df.columns.str.strip()
         if "GRE Prod Order" in demand_df.columns and "Project" in demand_df.columns:
+            # Get unique Project mapping (as before)
             demand_unique = demand_df[["GRE Prod Order", "Project"]].drop_duplicates(subset=["GRE Prod Order"])
             post_df = post_df.merge(demand_unique, how="left", left_on="Production Order", right_on="GRE Prod Order")
             post_df.drop(columns=["GRE Prod Order"], inplace=True, errors="ignore")
 
+            # Get All GRE Prod Orders (Project) mapping (as before)
             project_po_mapping = (
                 demand_df.groupby("Project")["GRE Prod Order"]
                 .apply(lambda x: ",".join(sorted(map(str, set(x)))))
                 .to_dict()
             )
             post_df["All GRE Prod Orders (Project)"] = post_df["Project"].map(project_po_mapping)
+            
+            # Get Effective date end - latest date for each Production Order
+            if "Effective date end" in demand_df.columns:
+                # Convert to datetime if it's not already
+                demand_df["Effective date end"] = pd.to_datetime(demand_df["Effective date end"], errors='coerce')
+                
+                # Get the latest effective date end for each GRE Prod Order
+                effective_date_mapping = (
+                    demand_df.groupby("GRE Prod Order")["Effective date end"]
+                    .max()  # Get the latest/maximum date
+                    .reset_index()
+                )
+                
+                # Merge with post_df
+                post_df = post_df.merge(effective_date_mapping, how="left", 
+                                      left_on="Production Order", right_on="GRE Prod Order")
+                post_df.drop(columns=["GRE Prod Order"], inplace=True, errors="ignore")
+                post_df["Effective date end"] = post_df["Effective date end"].fillna("not found")
+            
             post_df["Project"] = post_df["Project"].fillna("not found")
             post_df["All GRE Prod Orders (Project)"] = post_df["All GRE Prod Orders (Project)"].fillna("not found")
 
+            # Reorder columns to include Effective date end
             if "Project" in post_df.columns:
                 cols = list(post_df.columns)
                 cols.insert(3, cols.pop(cols.index("Project")))
                 if "All GRE Prod Orders (Project)" in cols:
                     cols.insert(4, cols.pop(cols.index("All GRE Prod Orders (Project)")))
+                if "Effective date end" in cols:
+                    cols.insert(5, cols.pop(cols.index("Effective date end")))
                 post_df = post_df[cols]
 
             # GB count in All GRE Prod Orders
@@ -84,7 +108,9 @@ if post_file is not None:
             )
             cols = list(post_df.columns)
             gb_col = cols.pop(cols.index("GB_Count_in_Project"))
-            cols.insert(5, gb_col)
+            # Insert after Effective date end if it exists, otherwise at position 5
+            insert_pos = 6 if "Effective date end" in cols else 5
+            cols.insert(insert_pos, gb_col)
             post_df = post_df[cols]
 
     # Clean numeric columns
