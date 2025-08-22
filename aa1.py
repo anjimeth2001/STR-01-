@@ -248,6 +248,7 @@ if post_file is not None:
     st.download_button(
         label="📥 Download Modified POST",
         data=final_buf,
-        file_name="modified_post.xlsx",
+        file_name="Updated_post.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
